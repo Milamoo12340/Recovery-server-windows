@@ -1,38 +1,27 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import { recoveryItems, type RecoveryItem, type InsertRecoveryItem } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getRecoveryItems(): Promise<RecoveryItem[]>;
+  getRecoveryItem(id: number): Promise<RecoveryItem | undefined>;
+  createRecoveryItem(item: InsertRecoveryItem): Promise<RecoveryItem>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getRecoveryItems(): Promise<RecoveryItem[]> {
+    return await db.select().from(recoveryItems);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getRecoveryItem(id: number): Promise<RecoveryItem | undefined> {
+    const [item] = await db.select().from(recoveryItems).where(eq(recoveryItems.id, id));
+    return item;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createRecoveryItem(item: InsertRecoveryItem): Promise<RecoveryItem> {
+    const [created] = await db.insert(recoveryItems).values(item).returning();
+    return created;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
