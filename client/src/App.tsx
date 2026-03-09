@@ -9,11 +9,13 @@ import NotFound from "@/pages/not-found";
 import { Dashboard } from "@/pages/dashboard";
 import { ItemDetail } from "@/pages/item-detail";
 import { ChatPage } from "@/pages/chat-page";
+import { SetupGuide } from "@/pages/setup-guide";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/setup" component={SetupGuide} />
       <Route path="/item/:id" component={ItemDetail} />
       <Route path="/chat" component={ChatPage} />
       <Route path="/chat/:id" component={ChatPage} />

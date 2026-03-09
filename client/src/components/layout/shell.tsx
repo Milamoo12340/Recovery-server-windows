@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Terminal, HardDrive, MessageSquare, ShieldAlert } from "lucide-react";
+import { Terminal, HardDrive, MessageSquare, ShieldAlert, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ShellProps {
@@ -12,6 +12,7 @@ export function Shell({ children }: ShellProps) {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: HardDrive },
+    { href: "/setup", label: "Quick Start", icon: Zap },
     { href: "/chat", label: "Recovery Assistant", icon: MessageSquare },
   ];
 
