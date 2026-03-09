@@ -2,17 +2,20 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shell, AlertCircle, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shell, AlertCircle, Copy, ChevronDown, ChevronUp, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 
 interface ServerInfo {
   serverUrl: string;
   serverIp: string;
   port: number;
+  isDeployed?: boolean;
 }
 
 export function SetupGuide() {
   const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     pxe: false,
     clonezilla: false,
@@ -34,6 +37,25 @@ export function SetupGuide() {
     };
     fetchServerInfo();
   }, []);
+
+  const verifyConnection = async () => {
+    if (!serverInfo) return;
+    setVerifying(true);
+    try {
+      const response = await fetch('/api/health');
+      if (response.ok) {
+        setVerificationStatus('success');
+        setTimeout(() => setVerificationStatus('idle'), 3000);
+      } else {
+        setVerificationStatus('error');
+      }
+    } catch (error) {
+      console.error('Verification failed:', error);
+      setVerificationStatus('error');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -74,7 +96,44 @@ export function SetupGuide() {
 
       {/* Server Connection Info */}
       <Card className="bg-card border-card-border p-6 space-y-4">
-        <h2 className="text-xl font-semibold">Your Server Information</h2>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold">Your Server Information</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {serverInfo?.isDeployed ? '🌐 Live & Deployed' : '💻 Local Development'}
+            </p>
+          </div>
+          <Button 
+            onClick={verifyConnection} 
+            disabled={verifying || !serverInfo}
+            variant={verificationStatus === 'success' ? 'outline' : 'default'}
+            size="sm"
+          >
+            {verifying && <Loader className="w-4 h-4 mr-2 animate-spin" />}
+            {verificationStatus === 'success' && <CheckCircle className="w-4 h-4 mr-2" />}
+            {verificationStatus === 'error' && <AlertTriangle className="w-4 h-4 mr-2" />}
+            {verifying ? 'Verifying...' : 'Verify Connection'}
+          </Button>
+        </div>
+
+        {verificationStatus === 'success' && (
+          <Alert className="border-green-500/50 bg-green-500/10">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700 dark:text-green-400">
+              ✓ Server is online and reachable. You can use the commands below safely.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {verificationStatus === 'error' && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              ⚠ Could not verify connection. Check your network or wait for deployment to complete.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
