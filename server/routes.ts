@@ -57,7 +57,14 @@ export async function registerRoutes(
   });
 
   // Serve repository files via API route to ensure they're accessible
-  app.use('/repository', express.static(path.join(process.cwd(), 'repository')));
+  // This is specifically for Clonezilla-live/GRUB/Linux clients to fetch files via HTTP
+  app.use('/repository', express.static(path.join(process.cwd(), 'repository'), {
+    dotfiles: 'allow',
+    index: false,
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  }));
 
   app.get(api.recoveryItems.list.path, async (req, res) => {
     const items = await storage.getRecoveryItems();
