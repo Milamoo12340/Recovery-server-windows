@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import express from "express";
+import path from "path";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { registerChatRoutes } from "./replit_integrations/chat/routes";
@@ -53,6 +55,9 @@ export async function registerRoutes(
       message: "Recovery server is online and accessible"
     });
   });
+
+  // Serve repository files via API route to ensure they're accessible
+  app.use('/repository', express.static(path.join(process.cwd(), 'repository')));
 
   app.get(api.recoveryItems.list.path, async (req, res) => {
     const items = await storage.getRecoveryItems();
